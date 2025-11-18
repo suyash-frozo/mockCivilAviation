@@ -16,6 +16,8 @@ const nextConfig = {
     }
     return config
   },
+  // Vercel optimizations
+  output: 'standalone',
 }
 
 module.exports = nextConfig
