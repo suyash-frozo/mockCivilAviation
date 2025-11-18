@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --aviation-blue: #1e40af;
+  --aviation-sky: #0ea5e9;
+  --aviation-navy: #1e3a8a;
+}
+
+body {
+  color: #1f2937;
+  background: #ffffff;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+

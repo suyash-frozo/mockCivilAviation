@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Section {
+  id          String        @id @default(cuid())
+  sectionId   String        @unique // air_law, meteorology, etc.
+  name        String
+  description String?
+  icon        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  questions   Question[]
+  examSessions ExamSession[]
+}
+
+model Question {
+  id            String       @id @default(cuid())
+  sectionId     String
+  section       Section      @relation(fields: [sectionId], references: [sectionId])
+  questionText  String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String?
+  correctAnswer String       // A, B, C, or D
+  explanation   String?
+  difficulty    String?      @default("medium") // easy, medium, hard
+  source        String?      // PDF filename or manual entry
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  examAnswers   ExamAnswer[]
+}
+
+model ExamSession {
+  id            String   @id @default(cuid())
+  sectionId     String
+  section       Section  @relation(fields: [sectionId], references: [sectionId])
+  score         Int      @default(0)
+  totalQuestions Int
+  correctAnswers Int     @default(0)
+  completed     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  answers       ExamAnswer[]
+}
+
+model ExamAnswer {
+  id            String      @id @default(cuid())
+  sessionId     String
+  session       ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      Question    @relation(fields: [questionId], references: [id])
+  selectedAnswer String
+  isCorrect     Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+}
