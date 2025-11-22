@@ -1,16 +1,22 @@
 'use client'
 
 import { useState } from 'react'
+import AIQuestionReview from './AIQuestionReview'
 
 interface PDFUploadProps {
   onUploadSuccess?: () => void
+  sections?: Array<{ sectionId: string; name: string }>
 }
 
-export default function PDFUpload({ onUploadSuccess }: PDFUploadProps) {
+export default function PDFUpload({ onUploadSuccess, sections = [] }: PDFUploadProps) {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState('')
+  const [useAI, setUseAI] = useState(true)
+  const [reviewQuestions, setReviewQuestions] = useState<any[]>([])
+  const [showReview, setShowReview] = useState(false)
+  const [sourceName, setSourceName] = useState('')
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -34,7 +40,8 @@ export default function PDFUpload({ onUploadSuccess }: PDFUploadProps) {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch('/api/upload-pdf', {
+      const endpoint = useAI ? '/api/upload-pdf-ai' : '/api/upload-pdf'
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       })
@@ -45,21 +52,84 @@ export default function PDFUpload({ onUploadSuccess }: PDFUploadProps) {
         throw new Error(data.error || 'Upload failed')
       }
 
-      setResult(data)
-      setFile(null)
-      
-      // Reset file input
-      const fileInput = document.getElementById('pdf-file') as HTMLInputElement
-      if (fileInput) fileInput.value = ''
+      if (useAI && data.questions) {
+        // AI extraction - show review interface
+        setReviewQuestions(data.questions)
+        setSourceName(file.name)
+        setShowReview(true)
+        setFile(null)
+        
+        // Reset file input
+        const fileInput = document.getElementById('pdf-file') as HTMLInputElement
+        if (fileInput) fileInput.value = ''
+      } else {
+        // Regular extraction - auto-saved
+        setResult(data)
+        setFile(null)
+        
+        // Reset file input
+        const fileInput = document.getElementById('pdf-file') as HTMLInputElement
+        if (fileInput) fileInput.value = ''
 
-      if (onUploadSuccess) {
-        onUploadSuccess()
+        if (onUploadSuccess) {
+          onUploadSuccess()
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to upload PDF')
     } finally {
       setUploading(false)
     }
+  }
+
+  const handleSaveReviewed = async (questions: any[]) => {
+    setUploading(true)
+    setError('')
+    
+    try {
+      const response = await fetch('/api/questions/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions, source: sourceName }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save questions')
+      }
+
+      setResult(data)
+      setShowReview(false)
+      setReviewQuestions([])
+
+      if (onUploadSuccess) {
+        onUploadSuccess()
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to save questions')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleCancelReview = () => {
+    setShowReview(false)
+    setReviewQuestions([])
+    setSourceName('')
+  }
+
+  // If showing review, render review component
+  if (showReview) {
+    return (
+      <AIQuestionReview
+        questions={reviewQuestions}
+        source={sourceName}
+        sections={sections}
+        onSave={handleSaveReviewed}
+        onCancel={handleCancelReview}
+      />
+    )
   }
 
   return (
@@ -70,6 +140,34 @@ export default function PDFUpload({ onUploadSuccess }: PDFUploadProps) {
           Upload a PDF file containing mock exam questions. The system will automatically
           extract questions, classify them by section, and store them in the database.
         </p>
+      </div>
+
+      {/* AI Toggle */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="font-semibold text-blue-900 mb-1">
+              🤖 AI-Powered Extraction {useAI && <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded ml-2">RECOMMENDED</span>}
+            </div>
+            <p className="text-sm text-blue-700">
+              {useAI
+                ? 'Uses ChatGPT to intelligently extract questions with high accuracy. Questions will be reviewed before saving.'
+                : 'Uses pattern matching to extract questions. Questions are auto-saved (less accurate).'}
+            </p>
+          </div>
+          <button
+            onClick={() => setUseAI(!useAI)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              useAI ? 'bg-blue-600' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                useAI ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">

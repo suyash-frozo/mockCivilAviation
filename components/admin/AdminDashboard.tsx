@@ -99,7 +99,7 @@ export default function AdminDashboard() {
         {/* Tab Content */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           {activeTab === 'upload' && (
-            <PDFUpload onUploadSuccess={fetchSections} />
+            <PDFUpload onUploadSuccess={fetchSections} sections={sections} />
           )}
           {activeTab === 'add' && (
             <QuestionForm
