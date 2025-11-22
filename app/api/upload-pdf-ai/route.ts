@@ -5,37 +5,20 @@ import { extractQuestionsWithAI } from '@/lib/ai-pdf-extractor'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// Extract text from PDF using pdfjs-dist
+// Extract text from PDF using pdf-parse (better for Node.js)
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.js')
+    // Use pdf-parse which works well in Node.js server environments
+    const pdfParse = (await import('pdf-parse')).default
     
-    // Set up worker for production environment
-    if (pdfjs.GlobalWorkerOptions) {
-      // Use CDN worker URL that works in production
-      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
+    const data = await pdfParse(buffer)
+    
+    if (!data.text || data.text.length === 0) {
+      throw new Error('No text could be extracted from PDF. It may be image-based or encrypted.')
     }
     
-    const uint8Array = new Uint8Array(buffer)
-    
-    const loadingTask = pdfjs.getDocument({ 
-      data: uint8Array,
-      useSystemFonts: true,
-      verbosity: 0, // Disable warnings
-    })
-    const pdf = await loadingTask.promise
-    let fullText = ''
-    
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i)
-      const textContent = await page.getTextContent()
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ')
-      fullText += pageText + '\n'
-    }
-    
-    return fullText
+    console.log(`Extracted ${data.text.length} characters from ${data.numpages} pages`)
+    return data.text
   } catch (error: any) {
     console.error('PDF extraction detailed error:', error)
     throw new Error(`Failed to parse PDF: ${error.message || error}`)

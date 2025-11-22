@@ -5,39 +5,20 @@ import { prisma, initializeSections } from '@/lib/db'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// Use pdfjs-dist directly to avoid pdf-parse issues
+// Use pdf-parse for Node.js server environment
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    // Dynamic import to avoid SSR issues
-    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.js')
+    // Use pdf-parse which works well in Node.js server environments
+    const pdfParse = (await import('pdf-parse')).default
     
-    // Set up worker for production environment
-    if (pdfjs.GlobalWorkerOptions) {
-      // Use CDN worker URL that works in production
-      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
+    const data = await pdfParse(buffer)
+    
+    if (!data.text || data.text.length === 0) {
+      throw new Error('No text could be extracted from PDF. It may be image-based or encrypted.')
     }
     
-    // Convert Buffer to Uint8Array as required by pdfjs-dist
-    const uint8Array = new Uint8Array(buffer)
-    
-    const loadingTask = pdfjs.getDocument({ 
-      data: uint8Array,
-      useSystemFonts: true,
-      verbosity: 0, // Disable warnings
-    })
-    const pdf = await loadingTask.promise
-    let fullText = ''
-    
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i)
-      const textContent = await page.getTextContent()
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ')
-      fullText += pageText + '\n'
-    }
-    
-    return fullText
+    console.log(`Extracted ${data.text.length} characters from ${data.numpages} pages`)
+    return data.text
   } catch (error: any) {
     console.error('PDF extraction detailed error:', error)
     throw new Error(`Failed to parse PDF: ${error.message || error}`)
