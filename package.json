@@ -4,14 +4,16 @@
   "description": "Professional website for Civil Aviation Mock Exam App - PPL, CPL, ATPL preparation",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "export": "next build",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:migrate": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:init": "npx tsx lib/init-db.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
