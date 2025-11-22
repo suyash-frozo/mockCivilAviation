@@ -135,7 +135,7 @@ export default function QuestionManager({
         <div className="text-center py-8 text-gray-500">Loading questions...</div>
       ) : questions.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          No questions found in this section. Add questions using the "Add Question" tab.
+          No questions found in this section. Add questions using the &quot;Add Question&quot; tab.
         </div>
       ) : (
         <div className="space-y-4">

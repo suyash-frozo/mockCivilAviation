@@ -107,7 +107,7 @@ export default function ExamInterface({ sectionId, onBack }: ExamInterfaceProps)
         <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">No Questions Available</h2>
           <p className="text-gray-600 mb-6">
-            This section doesn't have any questions yet. Please check back later or contact the administrator.
+            This section doesn&apos;t have any questions yet. Please check back later or contact the administrator.
           </p>
           <button
             onClick={onBack}
