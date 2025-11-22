@@ -10,8 +10,10 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.js')
     
+    // Set up worker for production environment
     if (pdfjs.GlobalWorkerOptions) {
-      pdfjs.GlobalWorkerOptions.workerSrc = ''
+      // Use CDN worker URL that works in production
+      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
     }
     
     const uint8Array = new Uint8Array(buffer)
@@ -19,6 +21,7 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
     const loadingTask = pdfjs.getDocument({ 
       data: uint8Array,
       useSystemFonts: true,
+      verbosity: 0, // Disable warnings
     })
     const pdf = await loadingTask.promise
     let fullText = ''
@@ -34,6 +37,7 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
     
     return fullText
   } catch (error: any) {
+    console.error('PDF extraction detailed error:', error)
     throw new Error(`Failed to parse PDF: ${error.message || error}`)
   }
 }
