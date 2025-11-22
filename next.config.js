@@ -16,8 +16,7 @@ const nextConfig = {
     }
     return config
   },
-  // Vercel optimizations
-  output: 'standalone',
+  // Railway deployment - no standalone output needed
 }
 
 module.exports = nextConfig

@@ -4,7 +4,7 @@
   "description": "Professional website for Civil Aviation Mock Exam App - PPL, CPL, ATPL preparation",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate --schema=./prisma/schema.prisma && next build",
     "export": "next build",
     "start": "prisma migrate deploy && next start",
     "lint": "next lint",
