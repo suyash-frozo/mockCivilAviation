@@ -8,8 +8,10 @@ export const runtime = 'nodejs'
 // Use pdf-parse for Node.js server environment
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    // Use pdf-parse which works well in Node.js server environments
-    const pdfParse = (await import('pdf-parse')).default
+    // Dynamic import for pdf-parse (CommonJS module)
+    const pdfParseModule = await import('pdf-parse')
+    // Handle both default and named exports
+    const pdfParse = (pdfParseModule as any).default || pdfParseModule
     
     const data = await pdfParse(buffer)
     
